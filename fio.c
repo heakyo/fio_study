@@ -1,10 +1,11 @@
 #include<stdio.h>
+#include"lib/ffz.h"
 
 int main(int argc, char *argv[])
 {
-	printf("hello fio\n");
-	printf("%d\n", sizeof(unsigned long long));
+	int bitmask = 0x05;
 
-	printf("check:%d\n", endian_check());
+	printf("v: %d\n", ffz(bitmask));
+
 	return 0;
 }
