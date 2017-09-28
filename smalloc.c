@@ -99,18 +99,21 @@ static int mask_set(unsigned int *map, unsigned int mask)
 	return 1;
 }
 
+/* judge if the pool has the nr_blocks blocks */
 static int blocks_free(struct pool *pool, unsigned int pool_idx,
 		       unsigned int idx, size_t nr_blocks)
 {
 	return blocks_iter(pool, pool_idx, idx, nr_blocks, mask_cmp);
 }
 
+/* set the bitmap in the pool for nr_blocks blocks */
 static void set_blocks(struct pool *pool, unsigned int pool_idx,
 		       unsigned int idx, size_t nr_blocks)
 {
 	blocks_iter(pool, pool_idx, idx, nr_blocks, mask_set);
 }
 
+/* clear the bitmap in the pool for nr_blocks blocks */
 static void clear_blocks(struct pool *pool, unsigned int pool_idx,
 			 unsigned int idx, size_t nr_blocks)
 {
