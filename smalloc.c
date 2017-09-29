@@ -209,11 +209,26 @@ void sinit(void)
 	assert(i);
 }
 
-int main_t()
+static void *__smalloc_pool(struct pool *pool, size_t size)
 {
-	int word = 0x1D;
-	int start = 3;
-
-	printf("%d\n", find_next_zero(word, start));
-	return 0;
+	return NULL;
 }
+
+static void *smalloc_pool(struct pool *pool, size_t size)
+{
+	void *ptr;
+
+	ptr = __smalloc_pool(pool, size);
+
+	return ptr;
+}
+
+void *smalloc(size_t size)
+{
+	void *ptr;
+
+	ptr = smalloc_pool(&mp[0], size);
+
+	return ptr;
+}
+
