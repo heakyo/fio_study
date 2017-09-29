@@ -1,14 +1,16 @@
+CFLAGS = -g -O0
+
 all: fio
 
-fio: fio.o libfio.o smalloc.o
-	gcc $^ -o $@
+fio: fio.c libfio.o smalloc.o
+	gcc $^ $(CFLAGS) -o $@
 
 libfio.o: libfio.c
-	gcc $^ -c -o $@
+	gcc $^ -c $(CFLAGS) -o $@
 
 smalloc.o: smalloc.c
-	gcc $^ -c -o $@
+	gcc $^ -c $(CFLAGS) -o $@
 
 .PHONY: clean
 clean:
-	rm -rf fio libfio.o
+	rm -rf fio *.o

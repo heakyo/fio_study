@@ -18,6 +18,8 @@
 
 #define MAX_POOLS	16
 
+unsigned int smalloc_pool_size = INITIAL_SIZE;
+
 struct pool {
 	struct fio_mutex *lock;			/* protects this pool */
 	void *map;				/* map of blocks */
@@ -177,9 +179,11 @@ static bool add_pool(struct pool *pool, unsigned int alloc_size)
 	pool->bitmap = (unsigned int *)((char *) ptr + (pool->nr_blocks * SMALLOC_BPL));
 	memset(pool->bitmap, 0, bitmap_blocks * sizeof(unsigned int));
 
-	//pool->lock = fio_mutex_init(FIO_MUTEX_UNLOCKED);
+#if 0
+	pool->lock = fio_mutex_init(FIO_MUTEX_UNLOCKED);
 	if (!pool->lock)
 		goto out_fail;
+#endif
 
 	nr_pools++;
 	return true;
@@ -188,6 +192,21 @@ out_fail:
 	if (pool->map)
 		munmap(pool->map, pool->mmap_size);
 	return false;
+}
+
+void sinit(void)
+{
+	bool ret;
+	int i;
+
+	for (i = 0; i < INITIAL_POOLS; i++) {
+		ret = add_pool(&mp[nr_pools], smalloc_pool_size);
+		if (!ret)
+			break;
+	}
+
+	/* at least one pool should be added */
+	assert(i);
 }
 
 int main_t()
