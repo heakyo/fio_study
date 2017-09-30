@@ -1,15 +1,12 @@
-CFLAGS = -g -O0 -Wall
+CFLAGS = -c -g -O0 -Wall
 
 all: fio
 
-fio: fio.c libfio.o smalloc.o
-	gcc $^ $(CFLAGS) -o $@
+fio: fio.o libfio.o smalloc.o
+	$(CC) -o $@ $^
 
-libfio.o: libfio.c
-	gcc $^ -c $(CFLAGS) -o $@
-
-smalloc.o: smalloc.c
-	gcc $^ -c $(CFLAGS) -o $@
+%.o: %.c
+	$(CC) $^ $(CFLAGS) -o $@
 
 .PHONY: clean
 clean:
