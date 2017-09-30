@@ -24,8 +24,8 @@ struct pool {
 	struct fio_mutex *lock;			/* protects this pool */
 	void *map;				/* map of blocks */
 	unsigned int *bitmap;			/* blocks free/busy map */
-	size_t free_blocks;		/* free blocks */
-	size_t nr_blocks;			/* total blocks */
+	size_t free_blocks; 			/* free blocks */
+	size_t nr_blocks;			/* total bitmap blocks */
 	size_t next_non_full;
 	size_t mmap_size;
 };
@@ -133,7 +133,7 @@ static void clear_blocks(struct pool *pool, unsigned int pool_idx,
  * return value
  * 	5
  */
-static int find_next_zero(int word, int start)
+int find_next_zero(int word, int start)
 {
 	word >>= start;	
 	return ffz(word) + start;
@@ -211,7 +211,55 @@ void sinit(void)
 
 static void *__smalloc_pool(struct pool *pool, size_t size)
 {
-	return NULL;
+	void *ptr = NULL;
+	size_t nr_blocks;
+	int i; 			// bitmap block index
+	int idx; 		// block index in one bitmap block.  0<=idx<SMALLOC_BPI
+	int offset;
+	int last_idx;
+
+	// step 1 -- get the block count from params size
+	nr_blocks = size_to_blocks(size);
+	if (nr_blocks > pool->free_blocks)
+		goto fail;
+
+	// step 2 -- find enough blocks
+	i = pool->next_non_full;
+	last_idx = 0;
+	while (i < pool->nr_blocks) {
+
+		// find next non full bitmap block
+		if (pool->bitmap[i] == -1U) {
+			i++;
+			pool->next_non_full = i;
+			last_idx = 0;
+			continue;
+		}
+
+		idx = find_next_zero(pool->bitmap[i], last_idx);
+		if (!blocks_free(pool, i, idx, nr_blocks)) {
+			idx += nr_blocks;
+			if (idx < SMALLOC_BPI) { // still in the same bitmap block
+				last_idx = idx;
+			} else { // beyond the bitmap block
+				last_idx = 0;
+				while (idx >= SMALLOC_BPI) {
+					i++;
+					idx -= SMALLOC_BPI;
+				}
+			}
+			continue;
+		} else {
+			set_blocks(pool, i, idx, nr_blocks);
+			offset = i * SMALLOC_BPL + idx * SMALLOC_BPI;
+			break;
+		}
+	}
+
+	if (i < pool->nr_blocks)
+		ptr = pool->map + offset;
+fail:
+	return ptr;
 }
 
 static void *smalloc_pool(struct pool *pool, size_t size)
