@@ -209,6 +209,15 @@ void sinit(void)
 	assert(i);
 }
 
+#ifdef SMALLOC_REDZONE
+
+#else
+static void fill_redzone(struct block_hdr *hdr)
+{
+
+}
+#endif
+
 static void *__smalloc_pool(struct pool *pool, size_t size)
 {
 	void *ptr = NULL;
@@ -265,8 +274,18 @@ fail:
 static void *smalloc_pool(struct pool *pool, size_t size)
 {
 	void *ptr;
+	size_t alloc_size = size + sizeof(struct block_hdr);
 
-	ptr = __smalloc_pool(pool, size);
+	ptr = __smalloc_pool(&mp[0], alloc_size);
+	if (ptr != NULL) {
+		struct block_hdr *hdr = ptr;
+
+		hdr->size = alloc_size;
+		fill_redzone(hdr);
+
+		ptr += sizeof(*hdr);
+		memset(ptr, 0x0, size);
+	}
 
 	return ptr;
 }
