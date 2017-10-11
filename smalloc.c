@@ -7,7 +7,7 @@
 #include "arch/arch.h"
 #include "smalloc.h"
 
-#define SMALLOC_REDZONE		/* define to detect memory corruption */
+//#define SMALLOC_REDZONE		/* define to detect memory corruption */
 
 #define SMALLOC_BPB	32	/* block size, bytes-per-bit in bitmap */
 #define SMALLOC_BPI	(sizeof(unsigned int) * 8)
