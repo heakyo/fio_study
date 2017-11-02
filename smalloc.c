@@ -276,7 +276,7 @@ static void *smalloc_pool(struct pool *pool, size_t size)
 	void *ptr;
 	size_t alloc_size = size + sizeof(struct block_hdr);
 
-	ptr = __smalloc_pool(&mp[0], alloc_size);
+	ptr = __smalloc_pool(pool, alloc_size);
 	if (ptr != NULL) {
 		struct block_hdr *hdr = ptr;
 
@@ -293,9 +293,33 @@ static void *smalloc_pool(struct pool *pool, size_t size)
 void *smalloc(size_t size)
 {
 	void *ptr;
+	int i, end_pool;
 
-	ptr = smalloc_pool(&mp[0], size);
+	i = last_pool;
+	end_pool = nr_pools;
 
-	return ptr;
+	do {
+		// scan from mp[last_pool] to mp[nr_pools - 1]
+		for (; i < end_pool; i++) {
+
+			ptr = smalloc_pool(&mp[i], size);
+
+			if (ptr) {
+				last_pool = i;
+				return ptr;
+			}
+		}
+
+		if (last_pool) {
+			end_pool = last_pool; // scan from mp[0] to mp[last_pool - 1]
+			last_pool = i = 0;
+			continue;
+		}
+
+		break;
+
+	} while (1);
+
+	return NULL;
 }
 
